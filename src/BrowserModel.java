@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 
 /**
@@ -15,12 +16,14 @@ import java.util.Map;
 public class BrowserModel {
     // constants
     public static final String PROTOCOL_PREFIX = "http://";
+    public static final String DEFAULT_RESOURCE_PACKAGE = "resources/";
     // state
     private URL myHome;
     private URL myCurrentURL;
     private int myCurrentIndex;
     private List<URL> myHistory;
     private Map<String, URL> myFavorites;
+	private ResourceBundle myResources;
 
 
     /**
@@ -32,8 +35,9 @@ public class BrowserModel {
         myCurrentIndex = -1;
         myHistory = new ArrayList<>();
         myFavorites = new HashMap<>();
+        myResources = ResourceBundle.getBundle(DEFAULT_RESOURCE_PACKAGE + "Exception");
     }
-
+    
     /**
      * Returns the first page in next history, null if next history is empty.
      */
@@ -42,7 +46,7 @@ public class BrowserModel {
             myCurrentIndex++;
             return myHistory.get(myCurrentIndex);
         }
-        return null;
+        throw new BrowserException();
     }
 
     /**
@@ -53,13 +57,13 @@ public class BrowserModel {
             myCurrentIndex--;
             return myHistory.get(myCurrentIndex);
         }
-        return null;
+        throw new BrowserException();
     }
 
     /**
      * Changes current page to given URL, removing next history.
      */
-    public URL go (String url) {
+    public URL go (String url) throws BrowserException{
         try {
             URL tmp = completeURL(url);
             // unfortunately, completeURL may not have returned a valid URL, so test it
@@ -76,7 +80,7 @@ public class BrowserModel {
             return myCurrentURL;
         }
         catch (Exception e) {
-            return null;
+            throw new BrowserException(String.format(myResources.getString("ErrorOnGo"), url));
         }
     }
 
@@ -121,6 +125,10 @@ public class BrowserModel {
         }
     }
 
+    public ArrayList<String> getFavNames(){
+    	return new ArrayList<String>( myFavorites.keySet());
+    }
+    
     /**
      * Returns URL from favorites associated with given name, null if none set.
      */
@@ -128,7 +136,7 @@ public class BrowserModel {
         if (name != null && !name.equals("") && myFavorites.containsKey(name)) {
             return myFavorites.get(name);
         }
-        return null;
+        throw new BrowserException();
     }
 
     // deal with a potentially incomplete URL
@@ -149,6 +157,9 @@ public class BrowserModel {
                     return null;
                 }
             }
+        }
+        catch (Exception e) {
+            throw new BrowserException(String.format(myResources.getString("ErrorOnGo")));
         }
     }
 }
